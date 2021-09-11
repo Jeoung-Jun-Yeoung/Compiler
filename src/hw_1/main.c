@@ -34,18 +34,19 @@ yy factor();
 int main() {
     yy result;
     
-    scanf("%s",input);
+    scanf("%[^\n]s",input);
     get_token();
     result = expression();
+    printf("%d %f\n",result.type,result.value.f);
     if (token != END){
-        error(3);
+         error(3);
     }
     else{
         if (result.type == a){
-            printf("%d",result.value.i);    
+            printf("%d\n",result.value.i);    
         }
         else{
-            printf("%f",result.value.f);
+            printf("%f\n",result.value.f);
         }
     }
 
@@ -53,16 +54,7 @@ int main() {
 
 yy expression() {
     yy result;
-    yy temp_rst;
-    temp_rst = term();
-    if(temp_rst.type == a){
-        result.type = a;
-        result.value.i = temp_rst.value.i;
-    }
-    else {
-        result.type = b;
-        result.value.f = temp_rst.value.f;
-    }
+    result = term();    
     //result = term();
     while (token == PLUS)
     {
@@ -73,17 +65,19 @@ yy expression() {
             result.value.f = result.value.f + (float)tmp_rst.value.i; 
         }
         else if (tmp_rst.type == b && result.type == a){
+            printf("tmp value %f \n",tmp_rst.value.f);
             result.type = b;
+            printf("rs value %d \n",result.value.i);
             int temp = result.value.i;
             result.value.f = tmp_rst.value.f + (float)temp;
-            result.value.i = 0;
+            printf("last ck %f\n",result.value.f);
         }
         else if (tmp_rst.type == b && result.type == b){
             result.value.f = result.value.f + tmp_rst.value.f;
         }
-        else {
+        else if (tmp_rst.type == a && result.type == a){
+            //printf("왓니? %d %d\n",result.value.i , tmp_rst.value.i);
             result.value.i = result.value.i + tmp_rst.value.i;
-
         }
         
     }
@@ -92,17 +86,8 @@ yy expression() {
 
 yy term() {
     yy result;
-    yy temp_rst;
-    temp_rst = factor();
-    if(temp_rst.type == a){
-        result.type = a;
-        result.value.i = temp_rst.value.i;
-    }
-    else {
-        result.type = b;
-        result.value.f = temp_rst.value.f;
-    }
-    // 이 코드를 위처럼 이렇게 받아야 하지 않나? result = factor();
+    result = factor();
+
     while (token == STAR)
     {
         get_token();
@@ -115,14 +100,12 @@ yy term() {
             result.type = b;
             int temp = result.value.i;
             result.value.f = tmp_rst.value.f * (float)temp;
-            result.value.i = 0;
         }
         else if (tmp_rst.type == b && result.type == b){
             result.value.f = result.value.f * tmp_rst.value.f;
         }
         else {
             result.value.i = result.value.i * tmp_rst.value.i;
-
         }
     }
     return (result);
@@ -134,6 +117,7 @@ yy factor() {
         if (num.type == a){
             result.type = a;
             result.value.i = num.value.i;
+            //printf("num ck \n");
         }
         else{
             result.type = b;
@@ -142,17 +126,12 @@ yy factor() {
         get_token();
     }
     else if (token == LP){
+        printf("lpck\n");
         get_token();
-        yy temp_rst = expression();
-        if (temp_rst.type == a){
-            result.type = a;
-            result.value.i = temp_rst.value.i;
-        }
-        else {
-            result.type = b;
-            result.value.i = temp_rst.value.f;
-        }
-        // 위코드처럼 임시로 받고 건네야 하지 않을까? 하는 생각.. 판별해야하니까? 리턴전에result = expression();
+        
+        result = expression();   
+        printf("af lp token %d \n",token);   
+        //printf("af lp %d %d\n",result.type,result.value.i);
         if (token == RP){
             get_token();
         }
@@ -170,53 +149,73 @@ void get_token() {
     int flag = 0;
     char temp_num [50];
     int num_index = 0;
-
-    for (int i = curr_index; i < strlen(input); i++){
-        if (token == NUMBER && isdigit(input[i]) == 0){
+    
+    enum {NUMBER = 0, PLUS = 1, STAR = 2, LP = 3, RP = 4, END = 5}next_token;
+    
+    printf("len %lu\n",strlen(input));
+    for (int i = curr_index; i < strlen(input) + 1; i++){
+        printf("i %d\n",i);
+        if (next_token == NUMBER && (isdigit(input[i]) == 0 && input[i] != '.')){
+            printf("token%d input %c\n",next_token,input[i]);
+            printf("이전토큰이숫자면서 현재는 숫자가 아님\n");
+            
             curr_index = i;
+
             if (flag == 1) { // 실수
                 num.type = b;
                 num.value.f = atof(temp_num); 
+                printf("type %d value %f\n",num.type,num.value.f);
             }
             else{
                 num.type = a;
                 num.value.i = atoi(temp_num);
+                printf("type %d value %d\n",num.type,num.value.i);
             }
             break;
         }
         if(input[i] == '+'){
-            token = PLUS;
+            printf("+인지 %c\n",input[i]);
+            next_token = PLUS;
             curr_index = i + 1;
             break;
         }
         else if(input[i] == '*'){
-            token = STAR;
+            next_token = STAR;
             curr_index = i + 1;
             break;
         }
+        else if(input[i] == ' '){
+            continue;
+        }
         else if (input[i] == '('){
-            token = LP;
+            next_token = LP;
             curr_index = i + 1;
             break;
         }
         else if (input[i] == ')'){
-            token = RP;
+            next_token = RP;
             curr_index = i + 1;
             break;
         }
         else if (input[i] == '.'){
             flag = 1;
-        }
-        else if (isdigit(input[i]) != 0){
-            token = NUMBER;
             temp_num[num_index] = input[i];
             num_index++;
         }
+        else if (isdigit(input[i]) != 0){
+            printf("숫자인지 %c %d\n",input[i],i);
+            next_token = NUMBER;
+            temp_num[num_index] = input[i];
+            printf("temp_num %s\n",temp_num);
+            num_index++;
+        }
         else {
-            token = END;
+            next_token = END;
             break;
         }
     }
+    printf("token %d\n",next_token);
+    token = next_token; // 전역토큰에 정보를 담아준다.
 }
 
 
