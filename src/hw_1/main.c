@@ -54,23 +54,22 @@ int main() {
 
 yy expression() {
     yy result;
+    printf("expression 시작 \n");
     result = term();    
-    //result = term();
     while (token == PLUS)
     {
         get_token();
-        //result = result + term();
         yy tmp_rst = term();
         if (tmp_rst.type == a && result.type == b){
             result.value.f = result.value.f + (float)tmp_rst.value.i; 
         }
         else if (tmp_rst.type == b && result.type == a){
-            printf("tmp value %f \n",tmp_rst.value.f);
+            printf("expression tmp value %f \n",tmp_rst.value.f);
             result.type = b;
-            printf("rs value %d \n",result.value.i);
+            printf("expression rs value %d \n",result.value.i);
             int temp = result.value.i;
             result.value.f = tmp_rst.value.f + (float)temp;
-            printf("last ck %f\n",result.value.f);
+            printf("expression last ck %f\n",result.value.f);
         }
         else if (tmp_rst.type == b && result.type == b){
             result.value.f = result.value.f + tmp_rst.value.f;
@@ -91,7 +90,6 @@ yy term() {
     while (token == STAR)
     {
         get_token();
-        //result = result * factor();
         yy tmp_rst = factor();
         if (tmp_rst.type == a && result.type == b){
             result.value.f = result.value.f * (float)tmp_rst.value.i; 
@@ -126,9 +124,8 @@ yy factor() {
         get_token();
     }
     else if (token == LP){
-        printf("lpck\n");
+        printf("lp인식 ck\n");
         get_token();
-        
         result = expression();   
         printf("af lp token %d \n",token);   
         //printf("af lp %d %d\n",result.type,result.value.i);
@@ -152,29 +149,28 @@ void get_token() {
     
     enum {NUMBER = 0, PLUS = 1, STAR = 2, LP = 3, RP = 4, END = 5}next_token;
     
-    printf("len %lu\n",strlen(input));
+    printf("get_token 시작\n");
     for (int i = curr_index; i < strlen(input) + 1; i++){
-        printf("i %d\n",i);
+        printf("get_token for 문 i %d \n",i);
         if (next_token == NUMBER && (isdigit(input[i]) == 0 && input[i] != '.')){
-            printf("token%d input %c\n",next_token,input[i]);
-            printf("이전토큰이숫자면서 현재는 숫자가 아님\n");
+            printf("숫자를 자른 상황임, 뭘 보고 잘랐나? %c를 인지해서 이전꺼는 숫자판단. \n",input[i]);
             
             curr_index = i;
 
             if (flag == 1) { // 실수
                 num.type = b;
                 num.value.f = atof(temp_num); 
-                printf("type %d value %f\n",num.type,num.value.f);
+                printf("get_token 에서 실수를 자른 상황 type %d value %f \n",num.type,num.value.f);
             }
             else{
                 num.type = a;
                 num.value.i = atoi(temp_num);
-                printf("type %d value %d\n",num.type,num.value.i);
+                printf("get_token 에서 정수를 자른 상황 type %d value %d \n",num.type,num.value.i);
             }
             break;
         }
         if(input[i] == '+'){
-            printf("+인지 %c\n",input[i]);
+           // printf("get_token에서 + 인지함 %c \n",input[i]);
             next_token = PLUS;
             curr_index = i + 1;
             break;
@@ -203,10 +199,8 @@ void get_token() {
             num_index++;
         }
         else if (isdigit(input[i]) != 0){
-            printf("숫자인지 %c %d\n",input[i],i);
             next_token = NUMBER;
             temp_num[num_index] = input[i];
-            printf("temp_num %s\n",temp_num);
             num_index++;
         }
         else {
@@ -214,7 +208,7 @@ void get_token() {
             break;
         }
     }
-    printf("token %d\n",next_token);
+    printf("자른 token %d \n",next_token);
     token = next_token; // 전역토큰에 정보를 담아준다.
 }
 
