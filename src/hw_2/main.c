@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #define NUMBER 256
 #define STAR 258
 #define RPAREN 260
@@ -27,10 +28,11 @@ int go_to[12][3]= {
 int prod_left[7] = {0,EXPRESSION,EXPRESSION,TERM,TERM,FACTOR,FACTOR};
 int prod_length[7] = {0,3,1,3,1,3,1};
 
-int stack[1000];
+int stack[1000] = {0,};
 int value[250];
 int top = -1;
 int sym;
+int yyval;
 
 int yyparse();
 int yylex();
@@ -40,6 +42,7 @@ void reduce();
 
 void main(){
     yyparse();
+    printf("%d \n",yyval);
 }
 
 int yyparse(){
@@ -51,26 +54,35 @@ int yyparse(){
         i = action[stack[top]][sym-256];
         if(i == ACC){
             printf("SUCCES !\n");
+            printf("값 %d \n",value[top]);
         }
         else if (i > 0){
             printf("shift%d \n",i);
             shift(i);
+            for (int k = 0; k <= top; k++){
+                printf("stc %d va %d \n ",stack[k],value[k]);
+            }
         }
         else if (i < 0){
             printf("reduce %d \n",i);
             reduce(-i);
+            for (int k = 0; k <= top; k++){
+                printf("stc %d va %d \n ",stack[k],value[k]);
+            }
         }
     }
     while (i != ACC);
 }
 void push(int i){
     stack[++top] = i;
+    
 }
-char yytext[32];
-int yyval;
+
 void shift(int i){
     push(i);
-    value[top] = yyval;
+    printf("shift ck y %d top %d i %d \n",yyval,top,i);
+    value[top]=yyval;
+    
     sym = yylex();
 }
 void reduce(int i){
@@ -78,6 +90,22 @@ void reduce(int i){
     top -= prod_length[i];
     old_top = top;
     push(go_to[stack[old_top]][prod_left[i]]);
+    switch (i) {
+    case 1: value[top]=value[old_top + 1] + value[old_top + 3];
+        break;
+    case 2: value[top] = value[old_top + 1];
+        break;
+    case 3: value[top] = value[old_top + 1] * value[old_top + 3];
+        break;
+    case 4: value[top] = value[old_top + 1];
+        break;
+    case 5: value[top] = value[old_top + 2];
+        break; 
+    case 6: value[top] = value[old_top + 1];
+        break;
+    default : printf("error \n");
+        break;
+    }
 }
 void yyeror(){
     printf("syntax error \n");
@@ -86,17 +114,24 @@ void yyeror(){
 int yylex(){
     static char ch = ' ';
     int i = 0;
-    while (ch == ' ' || ch == '\t' || ch == '\n') ch = getchar();
+    char yytext[32];
+    while (ch == ' ' || ch == '\t' || ch == '\n') ch = getchar(); 
+    yyval = 0;
+    printf("ch %c \n",ch);
     if(isdigit(ch)){
-        do
+        do{
+            yytext[i] = ch;
             ch = getchar();
-        while (isdigit(ch));
+        } while (isdigit(ch));
+        yyval = atoi(yytext);
+        yytext[i] = '0';
+        printf("yyval ck in yylex %d \n",yyval);
         return(NUMBER);}
     else if (ch == '+'){printf("plsu ck \n");ch = getchar(); return(PLUS);}
     else if (ch == '*'){ch = getchar(); return(STAR);}
     else if (ch == '('){ch = getchar(); return(LPAREN);}
     else if (ch == ')'){ch = getchar(); return(RPAREN);}
-    else if (ch == '\n'){return(END);}
+    else if (ch == EOF){return(END);}
     else yyeror();
     
 }
