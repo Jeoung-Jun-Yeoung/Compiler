@@ -38,6 +38,7 @@ int yyparse();
 int yylex();
 void shift();
 void reduce();
+void yyerror();
 
 
 void main(){
@@ -51,6 +52,7 @@ int yyparse(){
     sym = yylex();
     printf("ck %d \n",sym);
     do {
+        printf("sck top %d sym %d \n",stack[top],sym);
         i = action[stack[top]][sym-256];
         if(i == ACC){
             printf("SUCCES !\n");
@@ -70,6 +72,9 @@ int yyparse(){
                 printf("stc %d va %d \n ",stack[k],value[k]);
             }
         }
+        else {
+            yyerror();
+        }
     }
     while (i != ACC);
 }
@@ -88,7 +93,10 @@ void shift(int i){
 void reduce(int i){
     int old_top;
     top -= prod_length[i];
+    printf("prod_length %d \n",prod_length[i]);
     old_top = top;
+    printf("old_top prod_left %d %d\n",old_top,prod_left[i]);
+    
     push(go_to[stack[old_top]][prod_left[i]]);
     switch (i) {
     case 1: value[top]=value[old_top + 1] + value[old_top + 3];
@@ -107,7 +115,7 @@ void reduce(int i){
         break;
     }
 }
-void yyeror(){
+void yyerror(){
     printf("syntax error \n");
     exit(1);
 }
@@ -127,11 +135,11 @@ int yylex(){
         yytext[i] = '0';
         printf("yyval ck in yylex %d \n",yyval);
         return(NUMBER);}
-    else if (ch == '+'){printf("plsu ck \n");ch = getchar(); return(PLUS);}
+    else if (ch == '+'){printf("plsu ck \n");ch = getchar(); printf(" ) ck \n %c",ch); return(PLUS);}
     else if (ch == '*'){ch = getchar(); return(STAR);}
     else if (ch == '('){ch = getchar(); return(LPAREN);}
     else if (ch == ')'){ch = getchar(); return(RPAREN);}
-    else if (ch == EOF){return(END);}
-    else yyeror();
+    else if (ch == '$'){return(END);}
+    else yyerror();
     
 }
