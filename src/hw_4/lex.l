@@ -1,6 +1,3 @@
-#define YYSTYPE_IS_DECLARED  1
-typedef long YYSTYPE;
-
 digit [0-9]
 letter [a-zA-Z_]
 delim [ \t]
@@ -8,9 +5,10 @@ line [\n]
 ws {delim}+
 
 %{
+#define YYSTYPE_IS_DECLARED  1
+typedef long YYSTYPE;
 #include "type.h"	
 #include "y.tab.h"
-extern int yylval;
 extern int line_no;
 extern A_ID *current_id;
 char *makeString();

@@ -1,12 +1,51 @@
 %{
 #define YYSTYPE_IS_DECLARED  1
 typedef long YYSTYPE;
-#include "stdio.h"	
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include "type.h"
 extern int line_no, syntax_err;
 extern A_NODE *root;
 extern A_ID *current_id;
 extern int current_level;
 extern A_TYPE *int_type;
+A_NODE *makeNode (NODE_NAME,A_NODE *,A_NODE *,A_NODE *);
+A_NODE *makeNodeList (NODE_NAME,A_NODE *,A_NODE *);
+A_ID *makeIdentifier(char *);
+A_ID *makeDummyIdentifier();
+A_TYPE *makeType(T_KIND);
+A_SPECIFIER *makeSpecifier(A_TYPE *,S_KIND);
+A_ID *searchIdentifier(char *,A_ID *);
+A_ID *searchIdentifierAtCurrentLevel(char *,A_ID *);
+A_SPECIFIER *updateSpecifier(A_SPECIFIER *, A_TYPE *, S_KIND);
+void checkForwardReference();
+void setDefaultSpecifier(A_SPECIFIER *);
+A_ID *linkDeclaratorList(A_ID *,A_ID *);
+A_ID *getIdentifierDeclared(char *);
+A_TYPE *getTypeOfStructOrEnumRefIdentifier(T_KIND,char *,ID_KIND);
+A_ID *setDeclaratorInit(A_ID *,A_NODE *);
+A_ID *setDeclaratorKind(A_ID *,ID_KIND);
+A_ID *setDeclaratorType(A_ID *,A_TYPE *);
+A_ID *setDeclaratorElementType(A_ID *,A_TYPE *);
+A_ID *setDeclaratorTypeAndKind(A_ID *,A_TYPE *,ID_KIND);
+A_ID *setDeclaratorListSpecifier(A_ID *,A_SPECIFIER *);
+A_ID *setFunctionDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
+A_ID *setFunctionDeclaratorBody(A_ID *, A_NODE *);
+A_ID *setParameterDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
+A_ID *setStructDeclaratorListSpecifier(A_ID *, A_TYPE *);
+A_TYPE *setTypeNameSpecifier(A_TYPE *, A_SPECIFIER *);
+A_TYPE *setTypeElementType(A_TYPE *,A_TYPE *);
+A_TYPE *setTypeField(A_TYPE *,A_ID *);
+A_TYPE *setTypeExpr(A_TYPE *,A_NODE *);
+A_TYPE *setTypeAndKindOfDeclarator(A_TYPE *,ID_KIND,A_ID *);
+A_TYPE *setTypeStructOrEnumIdentifier(T_KIND,char *,ID_KIND);
+BOOLEAN isNotSameFormalParameters(A_ID *, A_ID *);
+BOOLEAN isNotSameType(A_TYPE *, A_TYPE *);
+BOOLEAN isPointerOrArrayType(A_TYPE *);
+void syntax_error();
+void initialize();
+void print_ast(A_NODE *);
 %}
 %token IDENTIFIER TYPE_IDENTIFIER FLOAT_CONSTANT INTEGER_CONSTANT
 		CHARACTER_CONSTANT STRING_LITERAL PLUS MINUS PLUSPLUS 
@@ -21,7 +60,7 @@ extern A_TYPE *int_type;
 %%
 program
 		:translation_unit
-		{root=makeNode(N_PROGRAM,NIL $1,NIL); checkForwardReference();}
+		{root=makeNode(N_PROGRAM,NIL, $1,NIL); checkForwardReference();}
 		;
 translation_unit
 		: external_declaration					{$$=$1;}
@@ -74,13 +113,13 @@ init_declarator
 		| declarator ASSIGN initializer 	{$$=setDeclaratorInit($1,$3);}
 		;
 initializer 
-		: constant_expression 			{$$=makeNode(N_INIT_LST_ONE,NIL,$1,NIL);}
+		: constant_expression 			{$$=makeNode(N_INIT_LIST_ONE,NIL,$1,NIL);}
 		| LR initializer_list RR 			{$$=$2;}
 		;
 initializer_list
 		: initializer
-		{$$=makeNode(N_INIT_LIST,$1,NIL,makeNode(N_INIT_LIST,NIL,NIL,NIL,NIL));}
-		| initializer_list COMMA initializer 	{$$=makeNodeList(N_INIT_LST_ONE,$1,$3);}
+		{$$=makeNode(N_INIT_LIST,$1,NIL,makeNode(N_INIT_LIST_NIL,NIL,NIL,NIL));}
+		| initializer_list COMMA initializer 	{$$=makeNodeList(N_INIT_LIST,$1,$3);}
 		;
 type_specifier
 		: struct_type_specifier 				{$$=$1;}
@@ -89,18 +128,18 @@ type_specifier
 		;
 struct_type_specifier
 		: struct_or_union IDENTIFIER
-		{$$=setTypeStructOrEnumIdentiﬁer($1,$2,ID_STRUCT);}
+		{$$=setTypeStructOrEnumIdentifier($1,$2,ID_STRUCT);}
 		 LR {$$=current_id;current_level++;} struct_declaration_list RR
 		 {checkForwardReference();$$=setTypeField($3,$6);current_level--;
 		 current_id=$5;} 
 		| struct_or_union {$$=makeType($1);} LR {$$=current_id;current_level++;} 
-		struct_declaration_list RR {checkForwardReference();$$=setTypeFieId($2,$5);
+		struct_declaration_list RR {checkForwardReference();$$=setTypeField($2,$5);
 		current_level--;current_id=$4;} 
 		| struct_or_union IDENTIFIER
-		{$$=getTypeOfStructOrEnumRefidentifier($1,$2,1D_STRUCT);}
+		{$$=getTypeOfStructOrEnumRefIdentifier($1,$2,ID_STRUCT);}
 		;
 struct_or_union
-		: STRUCT_SYM 			{$$=T_STRUCT:}
+		: STRUCT_SYM 			{$$=T_STRUCT;}
 		| UNION_SYM	 			{$$=T_UNION;}
 		;
 struct_declaration_list
@@ -121,12 +160,12 @@ struct_declarator
 		;
 enum_type_specifier
 		: ENUM_SYM IDENTIFIER 
-		{$$=setTypeStructOrEnumIdentiﬁer(T _ENUM,$2,ID_ENUM};}
-		LR enumerator_list RR 		{$$=setTypeField($3,$5)};
+		{$$=setTypeStructOrEnumIdentifier(T_ENUM,$2,ID_ENUM);}
+		LR enumerator_list RR 		{$$=setTypeField($3,$5);}
 		| ENUM_SYM  					{$$=makeType(T_ENUM);}
-		LR enumerator_list RR 		{$$=setTypeField($2,$4)};
+		LR enumerator_list RR 		{$$=setTypeField($2,$4);}
 		| ENUM_SYM IDENTIFIER
-		{$$=getTypeOfStructOrEnumRefIdentiﬁer(T_ENUM,$2,ID_ENUM);}
+		{$$=getTypeOfStructOrEnumRefIdentifier(T_ENUM,$2,ID_ENUM);}
 		;
 enumerator_list
 		: enumerator 				{$$=$1;}
@@ -140,7 +179,7 @@ enumerator
 		ASSIGN constant_expression 		{$$=setDeclaratorInit($2,$4);}
 		;
 declarator
-		: pointer direct_declarator 		{$$=setDeclaratorElementType($2,$1)};
+		: pointer direct_declarator 		{$$=setDeclaratorElementType($2,$1);}
 		| direct_declarator 				{$$=$1;}
 		;
 pointer
@@ -149,7 +188,7 @@ pointer
 		;
 direct_declarator
 		: IDENTIFIER 						{$$=makeIdentifier($1);}
-		| LP declarator RP 				{$$=$2}
+		| LP declarator RP 				{$$=$2;}
 		| direct_declarator LB constant_expression_opt RB
 		{$$=setDeclaratorElementType($1,setTypeExpr(makeType(T_ARRAY),$3));}
 		| direct_declarator LP {$$=current_id;current_level++;}
@@ -164,7 +203,7 @@ parameter_type_list_opt
 parameter_type_list
 		: parameter_list 		{$$=$1;}
 		| parameter_list COMMA DOTDOTDOT {$$=linkDeclaratorList(
-		$1,setDecIaratorKind(makeDummyIdemiﬁer(),ID_PARM));}
+		$1,setDeclaratorKind(makeDummyIdentifier(),ID_PARM));}
 		;
 parameter_list
 		: parameter_declaration 		{$$=$1;}
@@ -175,7 +214,7 @@ parameter_declaration
 		: declaration_specifiers declarator
 		{$$=setParameterDeclaratorSpecifier($2,$1);}
 		| declaration_specifiers abstract_declarator_opt
-		{$$=setParameterDeclaratorSpeciﬁer(setDecIaratorType(
+		{$$=setParameterDeclaratorSpecifier(setDeclaratorType(
 		makeDummyIdentifier(),$2),$1);}
 		;
 abstract_declarator_opt
@@ -191,7 +230,7 @@ abstract_declarator
 direct_abstract_declarator
 		: LP abstract_declarator RP 	{$$=$2;}
 		| LB constant_expression_opt RB
-		{$$=setTypeExpr(makeType(T_ARRAY),$2};
+		{$$=setTypeExpr(makeType(T_ARRAY),$2);}
 		| direct_abstract_declarator LB constant_expression_opt RB
 		{$$=setTypeElementType($1,setTypeExpr(makeType(T_ARRAY),$3));}
 		| LP parameter_type_list_opt RP
@@ -200,7 +239,7 @@ direct_abstract_declarator
 		{$$=setTypeElementType($1,setTypeExpr(makeType(T_FUNC),$3));}
 		;
 statement_list_opt
-		: 					{$$=makeNode(N_STMT_LIST,NIL,NIL,NIL,NIL);}
+		: 					{$$=makeNode(N_STMT_LIST_NIL,NIL,NIL,NIL);}
 		| statement_list {$$=$1;}
 		;
 statement_list
@@ -340,7 +379,7 @@ additive_expression
 		| additive_expression PLUS multiplicative_expression
 				{$$=makeNode(N_EXP_ADD,$1,NIL,$3);}
 		| additive_expression MINUS multiplicative_expression
-				($$=makeNode(N_EXP_SUB,$1,NIL,$3);}
+				{$$=makeNode(N_EXP_SUB,$1,NIL,$3);}
 		;
 multiplicative_expression
 		: cast_expression 			{$$=$1;}
@@ -388,9 +427,9 @@ postfix_expression
 		| postfix_expression ARROW IDENTIFIER
 					{$$=makeNode(N_EXP_ARROW,$1,NIL,$3);}
 		| postfix_expression PLUSPLUS
-					{$$=makeNode(N_EXP_POST_INC,$1,NIL,$3);}
+					{$$=makeNode(N_EXP_POST_INC,NIL,$1,NIL);}
 		| postfix_expression MINUSMINUS
-					{$$=makeNode(N_EXP_POST_DEC,$1,NIL,$3);}
+					{$$=makeNode(N_EXP_POST_DEC,NIL,$1,NIL);}
 		;
 primary_expression
 		: IDENTIFIER
@@ -407,7 +446,6 @@ type_name
 		;
 %%
 extern char *yytext;
-int line_no = 1;
 int yyerror(char *s)
 {
 	printf("line %d: %s near %s\n",line_no,s,yytext);
@@ -417,6 +455,13 @@ int yywrap(){
 	return 1;
 }
 void main(){
+	initialize();
 	yyparse();
+	if(syntax_err ==0){
+		print_ast(root);
+	}
+	else
+		printf("wrong\n");
 	printf("succes! \n");
+	return 0;
 }

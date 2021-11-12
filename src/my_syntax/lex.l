@@ -1,6 +1,3 @@
-#define YYSTYPE_IS_DECLARED  1
-typedef long YYSTYPE;
-
 digit [0-9]
 letter [a-zA-Z_]
 delim [ \t]
@@ -8,9 +5,10 @@ line [\n]
 ws {delim}+
 
 %{
+#define YYSTYPE_IS_DECLARED  1
+typedef long YYSTYPE;
 #include "type.h"	
 #include "y.tab.h"
-extern int yylval;
 extern int line_no;
 extern A_ID *current_id;
 char *makeString();
@@ -29,10 +27,6 @@ else { return(ELSE_SYM); }
 enum { return(ENUM_SYM); }
 for { return(FOR_SYM); }
 if { return(IF_SYM); }
-int {return(TYPE_IDENTIFIER); }
-float {return(TYPE_IDENTIFIER); }
-char {return(TYPE_IDENTIFIER); }
-void {return(TYPE_IDENTIFIER); }
 return { return(RETURN_SYM); }
 sizeof { return(SIZEOF_SYM); }
 static { return(STATIC_SYM); }
@@ -71,11 +65,11 @@ while { return(WHILE_SYM); }
 "\+" { return(PLUS); }
 "\-" { return(MINUS); }
 "\=" { return(ASSIGN); }
-{digit}+ { return(INTEGER_CONSTANT);}
-{digit}+\.{digit}+ { return(FLOAT_CONSTANT);}
-{letter}({letter}|{digit})* { return(IDENTIFIER);}
-\"([^"\n]|\\["\n])*\" { return(STRING_LITERAL);}
-\'([^'\n]|\'\')\' { return(CHARACTER_CONSTANT);}
+{digit}+ { yylval = atoi(yytext); return(INTEGER_CONSTANT);}
+{digit}+\.{digit}+ {yylval = makeString(yytext); return(FLOAT_CONSTANT);}
+{letter}({letter}|{digit})* { return(checkIdentifier(yytext));}
+\"([^"\n]|\\["\n])*\" {yylval = makeString(yytext); return(STRING_LITERAL);}
+\'([^'\n]|\'\')\' { yylval = *(yytext+1); return(CHARACTER_CONSTANT);}
 %%
 char *makeString(char *s) {
 	char *t ;
