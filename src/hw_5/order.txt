@@ -1,0 +1,3 @@
+yacc -d kim.y
+lex kim.l
+cc lex.yy.c y.tab.c semantic.c semantic.h main.c print.c print_sem.c syntax.h syntax.c
