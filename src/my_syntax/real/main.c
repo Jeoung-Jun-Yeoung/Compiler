@@ -5,11 +5,11 @@
 #include "type.h"
 #include "semantic.h"
 
-extern FILE *fp;
+extern FILE *yyin;
 extern int syntax_err;
 extern int semantic_err;
 extern A_NODE *root;
-extern FILE *fp;
+extern FILE *yyin;
 
 void initialize();
 void print_ast();
@@ -21,16 +21,17 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     
-    if ((fp = fopen(argv[argc-1], "r")) == NULL) {
+    if ((yyin = fopen(argv[argc-1], "r")) == NULL) {
         printf("can not open input file: %s\n", argv[argc-1]);
         exit(1);
     }
     puts("\nstart syntax analysis");
     initialize();
+    puts("\nafter start syntax analysis");
     yyparse();
-
+    
     if (syntax_err) {
-        puts("syntax_err\n");
+        puts("syntax_err");
         return 1;
     }
     print_ast(root);
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]) {
     puts("\nstart semantic analysis");
     semantic_analysis(root);
     
-    if (semantic_err){
+    if (semantic_err) {
         puts("semantic_err");
         return 1;
     }

@@ -1,5 +1,0 @@
-
-int main() {
-    main = main;
-
-}

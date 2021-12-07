@@ -2,50 +2,20 @@
 #define YYSTYPE_IS_DECLARED  1
 typedef long YYSTYPE;
 #include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
 #include "type.h"
+
 extern int line_no, syntax_err;
 extern A_NODE *root;
 extern A_ID *current_id;
 extern int current_level;
 extern A_TYPE *int_type;
-A_NODE *makeNode (NODE_NAME,A_NODE *,A_NODE *,A_NODE *);
-A_NODE *makeNodeList (NODE_NAME,A_NODE *,A_NODE *);
-A_ID *makeIdentifier(char *);
-A_ID *makeDummyIdentifier();
-A_TYPE *makeType(T_KIND);
-A_SPECIFIER *makeSpecifier(A_TYPE *,S_KIND);
-A_ID *searchIdentifier(char *,A_ID *);
-A_ID *searchIdentifierAtCurrentLevel(char *,A_ID *);
-A_SPECIFIER *updateSpecifier(A_SPECIFIER *, A_TYPE *, S_KIND);
-void checkForwardReference();
-void setDefaultSpecifier(A_SPECIFIER *);
-A_ID *linkDeclaratorList(A_ID *,A_ID *);
-A_ID *getIdentifierDeclared(char *);
-A_TYPE *getTypeOfStructOrEnumRefIdentifier(T_KIND,char *,ID_KIND);
-A_ID *setDeclaratorInit(A_ID *,A_NODE *);
-A_ID *setDeclaratorKind(A_ID *,ID_KIND);
-A_ID *setDeclaratorType(A_ID *,A_TYPE *);
-A_ID *setDeclaratorElementType(A_ID *,A_TYPE *);
-A_ID *setDeclaratorTypeAndKind(A_ID *,A_TYPE *,ID_KIND);
-A_ID *setDeclaratorListSpecifier(A_ID *,A_SPECIFIER *);
-A_ID *setFunctionDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
-A_ID *setFunctionDeclaratorBody(A_ID *, A_NODE *);
-A_ID *setParameterDeclaratorSpecifier(A_ID *, A_SPECIFIER *);
-A_ID *setStructDeclaratorListSpecifier(A_ID *, A_TYPE *);
-A_TYPE *setTypeNameSpecifier(A_TYPE *, A_SPECIFIER *);
-A_TYPE *setTypeElementType(A_TYPE *,A_TYPE *);
-A_TYPE *setTypeField(A_TYPE *,A_ID *);
-A_TYPE *setTypeExpr(A_TYPE *,A_NODE *);
-A_TYPE *setTypeAndKindOfDeclarator(A_TYPE *,ID_KIND,A_ID *);
-A_TYPE *setTypeStructOrEnumIdentifier(T_KIND,char *,ID_KIND);
-BOOLEAN isNotSameFormalParameters(A_ID *, A_ID *);
-BOOLEAN isNotSameType(A_TYPE *, A_TYPE *);
-BOOLEAN isPointerOrArrayType(A_TYPE *);
+extern FILE *yyin;
+
+
 void syntax_error();
 void initialize();
 void print_ast(A_NODE *);
+void print_sem_ast(A_NODE *);
 %}
 %token IDENTIFIER TYPE_IDENTIFIER FLOAT_CONSTANT INTEGER_CONSTANT
 		CHARACTER_CONSTANT STRING_LITERAL PLUS MINUS PLUSPLUS 
@@ -454,14 +424,35 @@ int yyerror(char *s)
 int yywrap(){
 	return 1;
 }
-void main(){
-	initialize();
-	yyparse();
-	if(syntax_err ==0){
-		print_ast(root);
-	}
-	else
-		printf("wrong\n");
-	printf("succes! \n");
-	return 0;
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("source file not given\n");
+        exit(1);
+    }
+    
+    if ((yyin = fopen(argv[argc-1], "r")) == NULL) {
+        printf("can not open input file: %s\n", argv[argc-1]);
+        exit(1);
+    }
+    puts("\nstart syntax analysis");
+    initialize();
+    puts("\nafter start syntax analysis");
+    yyparse();
+    
+    if (syntax_err) {
+        puts("syntax_err");
+        return 1;
+    }
+    print_ast(root);
+    
+    puts("\nstart semantic analysis");
+    semantic_analysis(root);
+    
+    if (semantic_err) {
+        puts("semantic_err");
+        return 1;
+    }
+    
+    print_sem_ast(root);
+    return 0;
 }
