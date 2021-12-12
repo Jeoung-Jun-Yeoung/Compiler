@@ -195,6 +195,7 @@ A_SPECIFIER *updateSpecifier(A_SPECIFIER *p, A_TYPE *t, S_KIND s)
     return p;
 }
 
+
 // link two declaraor list id1 & id2
 A_ID *linkDeclaratorList(A_ID *id1, A_ID *id2)
 {
