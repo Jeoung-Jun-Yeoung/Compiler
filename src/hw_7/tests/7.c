@@ -1,6 +1,6 @@
 
 int main() {
-    printf("hello world");
+    printf("hello compiler world");
 
     return 0;
 }

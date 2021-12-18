@@ -116,20 +116,6 @@ void gen_program(A_NODE *node) {
     }
 }
 
-// void gen_global_init_list(A_ID *id) {
-//     while (id) {
-//         if (id->kind == ID_VAR && id->level == 0 && id->init) {
-//             gen_initializer_global(id->init, id->type, id->address);
-//         } else if (id->kind == ID_FUNC) {
-//             A_ID* fields = (A_ID *) id->type->expr->llink;
-//             gen_global_init_list(fields);
-//         } else {
-
-//         }
-
-//         id = id->link;
-//     }
-// }
 
 void gen_expression(A_NODE *node) {
     A_ID *id;

@@ -1,10 +1,9 @@
 
-void func11() {
-    int a;
-    printf("func11 called");
+void function() {
+    int value = 10;
+    printf("funciton finishied");
 }
-
 int main() {
-    func11();
+    function();
     return 0;
 }

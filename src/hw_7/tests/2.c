@@ -1,19 +1,17 @@
 typedef struct node {
     char *name;
-} node_t;
+} temp_node;
 
-void* func1(node_t *n, char *name) {
-    // this is comment
+void* function(temp_node *n, char *name) {
     n->name = name;
-
     return n;
 }
 
 int main() {
-    node_t n;
-    node_t *ptr = func1(&n, "name1");
+    temp_node a;
+    temp_node *ptr = function(&a, "name");
     printf("%s\n", ptr->name);
-    n.name = "name2";
+    n.name = "name_temp";
     printf("%s\n", ptr->name);
 
     return 0;

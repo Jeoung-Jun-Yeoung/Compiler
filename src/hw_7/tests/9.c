@@ -4,8 +4,8 @@ struct node {
 	struct node *link; 
 };
 
-void node_print(struct node *this) {
-    printf("name: %c, value: %d, link: %d\n", this->name, this->value, this->link);
+void node_print(struct node *a) {
+    printf("name: %c, value: %d, link: %d\n", a->name, a->value, a->link);
 }
 
 int main() {
@@ -16,7 +16,7 @@ int main() {
     n1.link = &n2;
 
     n1.link->name = 'b';
-    n1.link->value = 12;
+    n1.link->value = 24;
     
     node_print(&n1);
     node_print(&n2);

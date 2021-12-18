@@ -1,6 +1,3 @@
-//
-// Created by loki on 15. 12. 19..
-//
 
 #ifndef COMPILER_FINAL_TERM_GEN_H
 #define COMPILER_FINAL_TERM_GEN_H

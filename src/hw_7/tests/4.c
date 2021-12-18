@@ -1,12 +1,12 @@
 
-enum ee {
-	zero,
-	one,
-	seven=2+5
-} park;
+enum en {
+	a,
+	b,
+	c=5
+} een;
 
 int main() {
-	printf("zero: %d, one: %d, seven: %d", zero, one, seven);
+	printf("a %d, b %d, c %d", a, b, c);
 
 	return 0;
 }

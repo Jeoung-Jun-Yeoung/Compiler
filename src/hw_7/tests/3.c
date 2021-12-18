@@ -1,13 +1,13 @@
-static int *kim[10], j = 20+30;
-int fun();
+static int *jeong[5], j = 24;
+int function();
 typedef struct {
 	int val;
-} STR;
+} str;
 
 int main() {
-	STR s;
-	s.val = 10;
-	printf("%d", s.val);
+	str a;
+	a.val = 23;
+	printf("%d", a.val);
 
 	return 0;
 }
